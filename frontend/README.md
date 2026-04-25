@@ -1,16 +1,25 @@
-# React + Vite
+# 🛒 Cartify - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The client-side application for Cartify, built with React, Vite, and Tailwind CSS.
 
-Currently, two official plugins are available:
+## 🚀 Features
+- **Responsive UI:** Modern design using Tailwind CSS.
+- **State Management:** React Context API for authentication and global state.
+- **Dynamic Routing:** Protected routes for Employers and Employees.
+- **Real-time API Integration:** Seamless communication with the Node.js backend.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## 🛠️ Scripts
+- `npm run dev`: Starts the development server.
+- `npm run build`: Builds the app for production.
+- `npm run lint`: Runs ESLint for code quality.
+- `npm run preview`: Locally preview the production build.
 
-## React Compiler
+## 📁 Structure
+- `src/components`: Reusable UI elements.
+- `src/context`: Global authentication state.
+- `src/pages`: Page-level components.
+- `src/assets`: Static assets and styling.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🔧 Configuration
+The frontend connects to the backend API. Ensure the backend is running on `http://localhost:5000` or update the API utility configuration.
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.

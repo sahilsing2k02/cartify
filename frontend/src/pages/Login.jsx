@@ -3,11 +3,13 @@ import { AuthContext } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
+  const [isRegistering, setIsRegistering] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState('employee');
   const [error, setError] = useState('');
   
-  const { login, user } = useContext(AuthContext);
+  const { login, register, user } = useContext(AuthContext);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -21,7 +23,13 @@ const Login = () => {
     e.preventDefault();
     setError('');
     
-    const res = await login(username, password);
+    let res;
+    if (isRegistering) {
+      res = await register(username, password, role);
+    } else {
+      res = await login(username, password);
+    }
+
     if (!res.success) {
       setError(res.message);
     }
@@ -38,10 +46,10 @@ const Login = () => {
           </div>
         </div>
         <h2 className="text-center text-3xl font-extrabold text-slate-900 tracking-tight">
-          Welcome back
+          {isRegistering ? 'Create your account' : 'Welcome back'}
         </h2>
         <p className="mt-2 text-center text-sm text-slate-600">
-          Simplify your inventory and sales.
+          {isRegistering ? 'Join Cartify and start managing.' : 'Simplify your inventory and sales.'}
         </p>
       </div>
 
@@ -63,7 +71,7 @@ const Login = () => {
                 type="text"
                 required
                 className="input-field"
-                placeholder="Enter your username"
+                placeholder="Enter username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
@@ -83,19 +91,44 @@ const Login = () => {
               />
             </div>
 
+            {isRegistering && (
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  Account Role
+                </label>
+                <select 
+                  className="input-field"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                >
+                  <option value="employee">Staff / Employee</option>
+                  <option value="employer">Manager / Employer</option>
+                </select>
+              </div>
+            )}
+
             <div>
               <button
                 type="submit"
                 className="w-full btn btn-primary py-2.5 text-base font-bold shadow-md active:scale-[0.98]"
               >
-                Sign In
+                {isRegistering ? 'Sign Up' : 'Sign In'}
               </button>
             </div>
           </form>
 
+          <div className="mt-6">
+            <button
+              onClick={() => { setIsRegistering(!isRegistering); setError(''); }}
+              className="w-full text-center text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors"
+            >
+              {isRegistering ? 'Already have an account? Sign in' : "Don't have an account? Register"}
+            </button>
+          </div>
+
           <div className="mt-8 pt-6 border-t border-slate-100 flex justify-center gap-4">
              <div className="text-xs text-slate-400 font-medium uppercase tracking-widest">
-               Cartify v2.0
+               Cartify v2.1
              </div>
           </div>
         </div>

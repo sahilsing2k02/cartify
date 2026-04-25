@@ -69,4 +69,38 @@ router.delete('/:id', protect, employerOnly, async (req, res) => {
   }
 });
 
+// @route   PUT /api/items/:id/stock
+// @desc    Update item stock level
+// @access  Private/Employer
+router.put('/:id/stock', protect, employerOnly, async (req, res) => {
+  const { stock } = req.body;
+  try {
+    const item = await Item.findById(req.params.id);
+    if (!item) return res.status(404).json({ message: 'Item not found' });
+    
+    item.stock = stock;
+    item.reportedOutOfStock = stock === 0; // Auto-reset if stock added
+    const updatedItem = await item.save();
+    res.json(updatedItem);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error updating stock' });
+  }
+});
+
+// @route   PUT /api/items/:id/report
+// @desc    Report item as out of stock
+// @access  Private
+router.put('/:id/report', protect, async (req, res) => {
+  try {
+    const item = await Item.findById(req.params.id);
+    if (!item) return res.status(404).json({ message: 'Item not found' });
+    
+    item.reportedOutOfStock = true;
+    const updatedItem = await item.save();
+    res.json(updatedItem);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error reporting item' });
+  }
+});
+
 module.exports = router;

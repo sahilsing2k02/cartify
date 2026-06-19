@@ -46,7 +46,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const userInfo = localStorage.getItem('userInfo');
+    if (userInfo) {
+      try {
+        const parsed = JSON.parse(userInfo);
+        if (parsed.sessionId) {
+          await api.post('/api/auth/logout', { sessionId: parsed.sessionId });
+        }
+      } catch (err) {
+        console.error('Failed to log logout session:', err);
+      }
+    }
     setUser(null);
     localStorage.removeItem('userInfo');
   };

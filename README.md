@@ -10,11 +10,14 @@ Cartify is a full-stack **MERN** application built for modern retail and warehou
 - **Role-Based Access Control (RBAC):** Separate, protected portals for **Employers** and **Employees**.
 - **Secure Authentication:** JWT-based session tokens with `bcryptjs` password hashing.
 - **Protected Routes:** React Router guards redirect unauthenticated users to the login page.
-- **Registration & Login:** Toggle between signing in and creating a new account on the same page.
+- **Registration & Login:** Toggle between signing in and creating a new account on the same page (includes micro-interactive underline hover effects).
+- **Self-Service Password Changes:** Users can update their password securely from the navigation bar.
+- **Account Blocking Guard:** Employers can block or unblock employee accounts, immediately invalidating active JWT session tokens and preventing login.
 
 ### 💼 Employer Dashboard
-- **Product Management:** Full CRUD (Create, Read, Update, Delete) for inventory items with name and price.
+- **Product Management:** Full CRUD for inventory items with name and price, complete with safe inline confirm toggles for deletions.
 - **Stock Control:** Dedicated Stock tab to set and monitor unit quantities per product. Auto-clears out-of-stock flags when stock is replenished.
+- **Session & Activity Logs:** Live reporting dashboard tracking consolidated sessions, last login time, last exit time, and access status (Blocked/Online/Offline) for all registered employees.
 - **Logistics Assignment:** Create packing/delivery tasks for employees with a recipient, selected items, and quantities via the TaskCreator component.
 - **Task Overview:** View all assigned tasks with live status badges (Pending → Packed → Delivered) and staff remarks.
 
@@ -178,7 +181,12 @@ cartify/
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | `POST` | `/api/auth/register` | Public | Register a new user |
-| `POST` | `/api/auth/login` | Public | Login and receive JWT |
+| `POST` | `/api/auth/login` | Public | Login and receive JWT (blocked users rejected) |
+| `POST` | `/api/auth/logout` | Public | Log exit time for user session |
+| `PUT` | `/api/auth/change-password` | Private | Change password for logged-in user |
+| `GET` | `/api/auth/sessions` | Employer | List consolidated sessions and block statuses |
+| `PUT` | `/api/auth/users/:id/block` | Employer | Block an employee user account |
+| `PUT` | `/api/auth/users/:id/unblock` | Employer | Unblock an employee user account |
 
 ### Items
 | Method | Endpoint | Access | Description |
@@ -186,9 +194,10 @@ cartify/
 | `GET` | `/api/items` | Private | List all items |
 | `POST` | `/api/items` | Employer | Create a new item |
 | `PUT` | `/api/items/:id` | Employer | Update item name/price |
-| `DELETE` | `/api/items/:id` | Employer | Delete an item |
+| `DELETE` | `/api/items/:id` | Employer | Delete an item (inline verification) |
 | `PUT` | `/api/items/:id/stock` | Employer | Update stock quantity |
 | `PUT` | `/api/items/:id/report` | Private | Flag item as out-of-stock |
+| `POST` | `/api/items/checkout` | Private | Checkout cart and decrement stock levels in MongoDB |
 
 ### Tasks
 | Method | Endpoint | Access | Description |

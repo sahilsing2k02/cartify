@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import Receipt from './Receipt';
+import api from '../utils/api';
 
-const Cart = ({ cartTokens, updateQuantity, removeFromCart, clearCart }) => {
+const Cart = ({ cartTokens, updateQuantity, removeFromCart, clearCart, onCheckoutSuccess }) => {
   const [checkoutComplete, setCheckoutComplete] = useState(false);
   const [lastOrder, setLastOrder] = useState(null);
   const [customerName, setCustomerName] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const componentRef = useRef();
 
   useEffect(() => {
@@ -24,23 +27,42 @@ const Cart = ({ cartTokens, updateQuantity, removeFromCart, clearCart }) => {
     contentRef: componentRef,
   });
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cartTokens.length === 0) return;
     if (!customerName.trim()) {
       alert('Please enter a customer name for the bill.');
       return;
     }
     
-    // Save current cart for receipt before clearing
-    setLastOrder({
-      items: [...cartTokens],
-      subtotal,
-      vat,
-      total,
-      recipient: customerName
-    });
-    
-    setCheckoutComplete(true);
+    setLoading(true);
+    setError('');
+
+    try {
+      // Call backend API to persist sale and decrement stock in MongoDB Atlas
+      await api.post('/api/items/checkout', { items: cartTokens });
+
+      // Save current cart for receipt before clearing
+      setLastOrder({
+        items: [...cartTokens],
+        subtotal,
+        vat,
+        total,
+        recipient: customerName
+      });
+      
+      setCheckoutComplete(true);
+
+      // Trigger callback to refresh items list in the parent employee portal
+      if (onCheckoutSuccess) {
+        onCheckoutSuccess();
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+      const msg = err.response?.data?.message || 'Failed to complete checkout. Please try again.';
+      setError(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleNewOrder = () => {
@@ -48,6 +70,7 @@ const Cart = ({ cartTokens, updateQuantity, removeFromCart, clearCart }) => {
     setCustomerName('');
     setCheckoutComplete(false);
     setLastOrder(null);
+    setError('');
   };
 
   return (
@@ -100,6 +123,14 @@ const Cart = ({ cartTokens, updateQuantity, removeFromCart, clearCart }) => {
           </div>
         ) : (
           <>
+            {error && (
+              <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-lg text-sm font-medium animate-fade-in flex items-center gap-2 mb-4">
+                <svg className="w-4.5 h-4.5 shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>{error}</span>
+              </div>
+            )}
             {cartTokens.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-slate-300 py-10">
                 <svg className="w-10 h-10 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
@@ -109,20 +140,20 @@ const Cart = ({ cartTokens, updateQuantity, removeFromCart, clearCart }) => {
               <ul className="space-y-4">
                 {cartTokens.map(item => (
                   <li key={item._id} className="group p-3 rounded-lg border border-slate-100 hover:border-slate-200 hover:bg-slate-50 transition-all">
-                    <div className="flex justify-between items-start mb-2">
-                       <h4 className="text-xs font-bold text-slate-900 leading-snug line-clamp-1">{item.name}</h4>
-                       <span className="text-xs font-bold text-slate-900 ml-2">₹{(item.price * item.quantity).toFixed(2)}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center bg-white border border-slate-200 rounded-md p-0.5 shadow-sm">
-                        <button onClick={() => updateQuantity(item._id, -1)} className="w-6 h-6 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors">-</button>
-                        <span className="text-[10px] w-6 text-center font-bold text-slate-700">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item._id, 1)} className="w-6 h-6 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors">+</button>
-                      </div>
-                      <button onClick={() => removeFromCart(item._id)} className="text-slate-300 hover:text-red-500 p-1 transition-colors">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                      </button>
-                    </div>
+                     <div className="flex justify-between items-start mb-2">
+                        <h4 className="text-xs font-bold text-slate-900 leading-snug line-clamp-1">{item.name}</h4>
+                        <span className="text-xs font-bold text-slate-900 ml-2">₹{(item.price * item.quantity).toFixed(2)}</span>
+                     </div>
+                     <div className="flex items-center justify-between">
+                       <div className="flex items-center bg-white border border-slate-200 rounded-md p-0.5 shadow-sm">
+                         <button onClick={() => updateQuantity(item._id, -1)} className="w-6 h-6 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors">-</button>
+                         <span className="text-[10px] w-6 text-center font-bold text-slate-700">{item.quantity}</span>
+                         <button onClick={() => updateQuantity(item._id, 1)} className="w-6 h-6 flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded transition-colors">+</button>
+                       </div>
+                       <button onClick={() => removeFromCart(item._id)} className="text-slate-300 hover:text-red-500 p-1 transition-colors">
+                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                       </button>
+                     </div>
                   </li>
                 ))}
               </ul>
@@ -163,10 +194,10 @@ const Cart = ({ cartTokens, updateQuantity, removeFromCart, clearCart }) => {
 
           <button 
             onClick={handleCheckout}
-            disabled={cartTokens.length === 0 || !customerName.trim()}
-            className={`w-full py-4 px-4 rounded-xl font-black uppercase tracking-widest text-xs text-white shadow-xl transition-all active:scale-[0.98] flex justify-center items-center gap-2 ${cartTokens.length > 0 && customerName.trim() ? 'bg-primary-600 hover:bg-primary-700' : 'bg-slate-300 cursor-not-allowed shadow-none'}`}
+            disabled={cartTokens.length === 0 || !customerName.trim() || loading}
+            className={`w-full py-4 px-4 rounded-xl font-black uppercase tracking-widest text-xs text-white shadow-xl transition-all active:scale-[0.98] flex justify-center items-center gap-2 ${cartTokens.length > 0 && customerName.trim() && !loading ? 'bg-primary-600 hover:bg-primary-700' : 'bg-slate-300 cursor-not-allowed shadow-none'}`}
           >
-             Finalize & Generate Bill
+             {loading ? 'Processing...' : 'Finalize & Generate Bill'}
           </button>
         </div>
       )}

@@ -164,7 +164,7 @@ const Portal = () => {
             </div>
           </div>
           <div className="lg:col-span-4">
-            <Cart cartTokens={cart} updateQuantity={updateQuantity} removeFromCart={removeFromCart} clearCart={clearCart} />
+            <Cart cartTokens={cart} updateQuantity={updateQuantity} removeFromCart={removeFromCart} clearCart={clearCart} onCheckoutSuccess={fetchItems} />
           </div>
         </div>
 
@@ -282,7 +282,7 @@ const Portal = () => {
                                 onChange={() => toggleItemMark(task._id, itemId)}
                                 className="w-4 h-4 rounded border-slate-300 cursor-pointer accent-indigo-600"
                               />
-                              <span className={isMarked ? 'line-through opacity-50' : ''}>{i.name}</span>
+                              <span className={isMarked ? 'line-through opacity-50' : ''}>{i.item?.name}</span>
                             </div>
                             <span className="bg-white border border-slate-200 px-2 py-0.5 rounded text-[10px] tabular-nums shadow-sm">x{i.quantity}</span>
                           </li>
@@ -367,7 +367,7 @@ const Portal = () => {
                         {task.items.map((i, idx) => (
                           <span key={idx} className="inline-flex items-center gap-1.5 bg-slate-100 px-2.5 py-1 rounded-lg text-[10px] font-bold text-slate-600">
                             <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-                            {i.name} <span className="text-slate-400">×{i.quantity}</span>
+                            {i.item?.name} <span className="text-slate-400">×{i.quantity}</span>
                           </span>
                         ))}
                       </div>

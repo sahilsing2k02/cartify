@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const Task = require('../models/Task');
-const { protect, employerOnly } = require('../middleware/authMiddleware');
+const { protect, adminOnly } = require('../middleware/authMiddleware');
 
 // @route   POST /api/tasks
 // @desc    Create a new packing/delivery task
 // @access  Private/Employer
-router.post('/', protect, employerOnly, async (req, res) => {
+router.post('/', protect, adminOnly, async (req, res) => {
   console.log('POST /api/tasks hit');
   const { recipient, items } = req.body;
   try {

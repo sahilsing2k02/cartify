@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { useContext } from 'react';
 import { AuthContext } from './context/AuthContext';
 import Login from './pages/Login';
-import Dashboard from './pages/employer/Dashboard';
+import Dashboard from './pages/admin/Dashboard';
 import Portal from './pages/employee/Portal';
 import Navbar from './components/Navbar';
 
@@ -27,9 +27,9 @@ function App() {
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route 
-              path="/employer" 
+              path="/admin" 
               element={
-                <PrivateRoute role="employer">
+                <PrivateRoute role="admin">
                   <Dashboard />
                 </PrivateRoute>
               } 

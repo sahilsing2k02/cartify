@@ -14,7 +14,7 @@ const Login = () => {
 
   useEffect(() => {
     if (user) {
-      if (user.role === 'employer') navigate('/employer');
+      if (user.role === 'admin') navigate('/admin');
       else if (user.role === 'employee') navigate('/employee');
     }
   }, [user, navigate]);
@@ -91,21 +91,7 @@ const Login = () => {
               />
             </div>
 
-            {isRegistering && (
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                  Account Role
-                </label>
-                <select 
-                  className="input-field"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                >
-                  <option value="employee">Staff / Employee</option>
-                  <option value="employer">Manager / Employer</option>
-                </select>
-              </div>
-            )}
+
 
             <div>
               <button
@@ -120,7 +106,7 @@ const Login = () => {
           <div className="mt-6">
             <button
               onClick={() => { setIsRegistering(!isRegistering); setError(''); }}
-              className="w-full text-center text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors"
+              className="w-full text-center text-sm font-semibold text-primary-600 hover:text-primary-700 hover:underline transition-colors"
             >
               {isRegistering ? 'Already have an account? Sign in' : "Don't have an account? Register"}
             </button>

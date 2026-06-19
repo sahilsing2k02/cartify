@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Item = require('../models/Item');
-const { protect, employerOnly } = require('../middleware/authMiddleware');
+const { protect, adminOnly } = require('../middleware/authMiddleware');
 
 // @route   GET /api/items
 // @desc    Get all items (Accessible by both employer and employee)
@@ -18,7 +18,7 @@ router.get('/', protect, async (req, res) => {
 // @route   POST /api/items
 // @desc    Create a new item
 // @access  Private/Employer
-router.post('/', protect, employerOnly, async (req, res) => {
+router.post('/', protect, adminOnly, async (req, res) => {
   const { name, price } = req.body;
   try {
     if (!name || price === undefined) {
@@ -35,7 +35,7 @@ router.post('/', protect, employerOnly, async (req, res) => {
 // @route   PUT /api/items/:id
 // @desc    Update an item
 // @access  Private/Employer
-router.put('/:id', protect, employerOnly, async (req, res) => {
+router.put('/:id', protect, adminOnly, async (req, res) => {
   const { name, price } = req.body;
   try {
     const item = await Item.findById(req.params.id);
@@ -56,7 +56,7 @@ router.put('/:id', protect, employerOnly, async (req, res) => {
 // @route   DELETE /api/items/:id
 // @desc    Delete an item
 // @access  Private/Employer
-router.delete('/:id', protect, employerOnly, async (req, res) => {
+router.delete('/:id', protect, adminOnly, async (req, res) => {
   try {
     const item = await Item.findById(req.params.id);
     if (!item) {
@@ -72,7 +72,7 @@ router.delete('/:id', protect, employerOnly, async (req, res) => {
 // @route   PUT /api/items/:id/stock
 // @desc    Update item stock level
 // @access  Private/Employer
-router.put('/:id/stock', protect, employerOnly, async (req, res) => {
+router.put('/:id/stock', protect, adminOnly, async (req, res) => {
   const { stock } = req.body;
   try {
     const item = await Item.findById(req.params.id);
@@ -100,6 +100,49 @@ router.put('/:id/report', protect, async (req, res) => {
     res.json(updatedItem);
   } catch (error) {
     res.status(500).json({ message: 'Server error reporting item' });
+  }
+});
+
+// @route   POST /api/items/checkout
+// @desc    Finalize checkout, decrement stock of purchased items
+// @access  Private
+router.post('/checkout', protect, async (req, res) => {
+  const { items } = req.body;
+  
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ message: 'No items provided for checkout' });
+  }
+
+  try {
+    // 1. Validate stock level for all items first
+    for (const cartItem of items) {
+      const dbItem = await Item.findById(cartItem._id);
+      if (!dbItem) {
+        return res.status(404).json({ message: `Item ${cartItem.name || cartItem._id} not found` });
+      }
+      if (dbItem.stock < cartItem.quantity) {
+        return res.status(400).json({ 
+          message: `Insufficient stock for ${dbItem.name}. Available: ${dbItem.stock}, Requested: ${cartItem.quantity}` 
+        });
+      }
+    }
+
+    // 2. Decrement stock for all items
+    const updatedItems = [];
+    for (const cartItem of items) {
+      const dbItem = await Item.findById(cartItem._id);
+      dbItem.stock -= cartItem.quantity;
+      if (dbItem.stock === 0) {
+        dbItem.reportedOutOfStock = true;
+      }
+      await dbItem.save();
+      updatedItems.push(dbItem);
+    }
+
+    res.json({ message: 'Checkout processed successfully', items: updatedItems });
+  } catch (error) {
+    console.error('Checkout error:', error);
+    res.status(500).json({ message: 'Server error processing checkout' });
   }
 });
 

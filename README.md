@@ -218,4 +218,4 @@ cartify/
 ---
 
 ## 📄 License
-This project is licensed under **Sahil Singh**.
+This project is licensed under **Sahil Singh 2026**.

@@ -27,3 +27,8 @@ Thumbs.db
 build/
 bin/
 obj/
+
+# Logs and temporary files
+*.log
+*.err
+

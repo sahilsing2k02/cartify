@@ -1,4 +1,4 @@
-# 🛒 Cartify — Inventory & Logistics Management System
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/b8ea1efb-33b2-483f-9f45-76d53580b53f" /># 🛒 Cartify — Inventory & Logistics Management System
 
 Cartify is a full-stack **MERN** application built for modern retail and warehouse operations. It provides role-based portals for employers and employees, covering inventory management, sales terminals with printable receipts, and a complete packing/logistics workflow.
 
@@ -216,6 +216,35 @@ cartify/
 - Role-based middleware (`employerOnly`) enforces access at the API level.
 
 ---
+
+## Some Screenshots of The projects
+1.Admin Portal
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/b776f0da-c8e1-42ec-8e72-2228497929d9" />
+
+2.After Login
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/7cd60134-4935-4a28-ae6b-9c45ca9a03b8" />
+
+3.Inventory with adding and deleting options
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/6210555f-8eef-4545-9d7e-0186b51fb76f" />
+
+4. Distribution unit where we can add what to pack and deliver. 
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/19bac7b6-f20a-4436-8ce9-488257ee29f0" />
+
+5. Variable stock unit where you can add and manage your stock. 
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/35a4a04d-caaf-4943-b634-895cd670409c" />
+
+6. Activity log to monitor the security. 
+<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/1cf4c3ea-1ff9-4090-ba5c-c02f35273403" />
+
+Staff Portal
+ Basically, in the staff portal, This is especially made for staff. In this portal, staff can create bills, report if the products are unavailable to stock up, and if there are any vulnerabilities or misleading information, we can address those as well. 
+ The history of the products to be sent is also mentioned so that, in case of human error, we can refer back to it. 
+
+ <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/88f53878-2934-4b1f-abc5-a776c430b4f6" />
+ <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/bbb89dc3-34a2-41e5-8b52-80e42ef159ef" />
+ <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/32d87d1c-df0d-49b6-b278-4b79174e68a0" />
+ <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/1ae53233-107b-4556-bc74-dfec24e9c0a5" />
+
 
 ## 📄 License
 This project is licensed under **Sahil Singh 2026**.

@@ -8,7 +8,8 @@ const { protect, adminOnly } = require('../middleware/authMiddleware');
 
 // Helper function to generate JWT
 const generateToken = (id, role) => {
-  return jwt.sign({ id, role }, process.env.JWT_SECRET, {
+  const secret = process.env.JWT_SECRET || 'supersecretkey_cartify_123';
+  return jwt.sign({ id, role }, secret, {
     expiresIn: '30d',
   });
 };
@@ -59,7 +60,8 @@ router.post('/register', async (req, res) => {
       res.status(400).json({ message: 'Invalid user data' });
     }
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Registration error:', error);
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 });
 
@@ -105,7 +107,8 @@ router.post('/login', async (req, res) => {
       res.status(401).json({ message: 'Invalid credentials' });
     }
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    console.error('Login error:', error);
+    res.status(500).json({ message: error.message || 'Server error' });
   }
 });
 

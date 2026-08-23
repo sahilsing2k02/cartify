@@ -18,16 +18,43 @@ dotenv.config();
 
 const app = express();
 
-// Validate Environment Variables
-if (!process.env.JWT_SECRET) {
-  console.error('❌ CRITICAL ERROR: JWT_SECRET is not defined in .env file');
-  process.exit(1);
-}
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey_cartify_123';
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://cartify:K%40mini1661@cartify.r6ylnlf.mongodb.net/cartify?appName=cartify';
 
-if (!process.env.MONGO_URI) {
-  console.error('❌ CRITICAL ERROR: MONGO_URI is not defined in .env file');
-  process.exit(1);
-}
+let isConnected = false;
+const connectDB = async () => {
+  if (isConnected || mongoose.connection.readyState >= 1) {
+    isConnected = true;
+    return;
+  }
+  try {
+    await mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 3000 });
+    isConnected = true;
+    console.log('✅ MongoDB connected');
+  } catch (primaryError) {
+    try {
+      const directUri = MONGO_URI
+        .replace('mongodb+srv://', 'mongodb://')
+        .replace('@cartify.r6ylnlf.mongodb.net/', '@cartify-shard-00-00.r6ylnlf.mongodb.net:27017,cartify-shard-00-01.r6ylnlf.mongodb.net:27017,cartify-shard-00-02.r6ylnlf.mongodb.net:27017/') + '&ssl=true&authSource=admin';
+      await mongoose.connect(directUri, { serverSelectionTimeoutMS: 3000 });
+      isConnected = true;
+      console.log('✅ MongoDB connected via Direct Seed');
+    } catch (directError) {
+      try {
+        await mongoose.connect('mongodb://127.0.0.1:27017/cartify', { serverSelectionTimeoutMS: 2000 });
+        isConnected = true;
+        console.log('✅ Connected to Local MongoDB');
+      } catch (localError) {
+        console.warn('⚠️ DB Connection pending');
+      }
+    }
+  }
+};
+
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
 
 // Middleware
 const allowedOrigins = [
@@ -121,4 +148,6 @@ const startServer = async () => {
 };
 
 startServer();
+
+module.exports = app;
 

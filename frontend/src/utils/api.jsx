@@ -23,4 +23,18 @@ api.interceptors.request.use(
   }
 );
 
+// Add a response interceptor to handle authorization failures (e.g. account blocked or expired token)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      localStorage.removeItem('userInfo');
+      window.dispatchEvent(new CustomEvent('cartify:unauthorized', {
+        detail: { message: error.response.data?.message || 'Session expired or account restricted.' }
+      }));
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

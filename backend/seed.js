@@ -5,17 +5,34 @@ const dns = require('dns');
 const User = require('./models/User');
 const Item = require('./models/Item');
 
-// Use Google DNS for Atlas SRV resolution
-dns.setServers(['8.8.8.8', '8.8.4.4']);
-
 dotenv.config();
 
-mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/cartify')
-  .then(() => console.log('MongoDB Connected for Seeding'))
-  .catch(err => console.error(err));
+const connectDB = async () => {
+  const primaryUri = process.env.MONGO_URI;
+  const localUri = 'mongodb://127.0.0.1:27017/cartify';
+
+  if (primaryUri) {
+    try {
+      await mongoose.connect(primaryUri, { serverSelectionTimeoutMS: 3000 });
+      console.log('✅ Connected to Primary MongoDB Atlas for Seeding');
+      return;
+    } catch (err) {
+      console.warn(`⚠️ Primary MongoDB Atlas connection failed (${err.message}). Attempting fallback to local MongoDB...`);
+    }
+  }
+
+  try {
+    await mongoose.connect(localUri, { serverSelectionTimeoutMS: 3000 });
+    console.log('✅ Connected to Local MongoDB for Seeding');
+  } catch (err) {
+    console.error('❌ Database connection failed:', err.message);
+    process.exit(1);
+  }
+};
 
 const seedDB = async () => {
   try {
+    await connectDB();
     // Seed Users if they don't exist
     const adminExists = await User.findOne({ username: 'admin' });
     const staffExists = await User.findOne({ username: 'staff' });

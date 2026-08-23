@@ -12,14 +12,21 @@ const Dashboard = () => {
   const [editingId, setEditingId] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [activeTab, setActiveTab] = useState('inventory'); // 'inventory', 'tasks', 'stock', or 'activity'
+  const [error, setError] = useState('');
+  const [stockInputs, setStockInputs] = useState({});
   const { user } = useContext(AuthContext);
 
   const fetchItems = async () => {
     try {
       const res = await api.get('/api/items');
       setItems(res.data);
-    } catch (error) {
-      console.error(error);
+      const initialStockMap = {};
+      res.data.forEach(item => {
+        initialStockMap[item._id] = item.stock || 0;
+      });
+      setStockInputs(initialStockMap);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -27,8 +34,8 @@ const Dashboard = () => {
     try {
       const res = await api.get('/api/tasks');
       setTasks(res.data);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -36,8 +43,8 @@ const Dashboard = () => {
     try {
       const res = await api.get('/api/auth/sessions');
       setSessions(res.data);
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -48,17 +55,20 @@ const Dashboard = () => {
   }, []);
 
   const handleUpdateStock = async (itemId, newStock) => {
+    setError('');
     try {
       await api.put(`/api/items/${itemId}/stock`, { stock: Number(newStock) });
       fetchItems();
-    } catch (error) {
-      console.error(error);
-      alert('Failed to update stock');
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || 'Failed to update stock');
+      fetchItems(); // revert to last valid server state
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
     try {
       if (editingId) {
         await api.put(`/api/items/${editingId}`, { name, price: Number(price) });
@@ -69,8 +79,9 @@ const Dashboard = () => {
       setPrice('');
       setEditingId(null);
       fetchItems();
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || 'Failed to save product details.');
     }
   };
 
@@ -141,6 +152,18 @@ const Dashboard = () => {
           </button>
         </div>
       </div>
+
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm font-semibold flex items-center justify-between animate-fade-in shadow-sm">
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span>{error}</span>
+          </div>
+          <button onClick={() => setError('')} className="text-red-400 hover:text-red-600 font-bold text-xs uppercase">Dismiss</button>
+        </div>
+      )}
       
       {activeTab === 'inventory' ? (
         <div className="space-y-10">
@@ -299,7 +322,8 @@ const Dashboard = () => {
                       <div className="flex items-center gap-2 max-w-[160px]">
                         <input 
                           type="number" 
-                          defaultValue={item.stock || 0}
+                          value={stockInputs[item._id] ?? item.stock ?? 0}
+                          onChange={(e) => setStockInputs(prev => ({ ...prev, [item._id]: e.target.value }))}
                           onBlur={(e) => handleUpdateStock(item._id, e.target.value)}
                           className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold text-slate-900 focus:ring-2 focus:ring-primary-500/10 outline-none"
                         />
@@ -471,8 +495,8 @@ const Dashboard = () => {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {task.items.map((i, idx) => (
-                        <span key={idx} className="bg-slate-50 border border-slate-100 px-2 py-1 rounded text-[10px] font-bold text-slate-600">
-                          {i.item?.name} (x{i.quantity})
+                        <span key={idx} className={`border px-2 py-1 rounded text-[10px] font-bold ${i.item?.name ? 'bg-slate-50 border-slate-100 text-slate-600' : 'bg-red-50 border-red-100 text-red-500'}`}>
+                          {i.item?.name || '[Removed Item]'} (x{i.quantity})
                         </span>
                       ))}
                     </div>

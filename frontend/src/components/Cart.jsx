@@ -91,17 +91,17 @@ const Cart = ({ cartTokens, updateQuantity, removeFromCart, clearCart, onCheckou
               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
             </div>
             <h3 className="text-lg font-bold text-slate-900 mb-1 font-sans">Sale Finalized</h3>
-            <p className="text-slate-500 text-xs font-medium mb-8">Generated for {lastOrder.recipient}</p>
+            <p className="text-slate-500 text-xs font-medium mb-8">Generated for {lastOrder?.recipient || 'Customer'}</p>
             
             {/* Hidden Receipt for Printing, Visible for preview in modal style */}
             <div className="w-full scale-[0.8] origin-top border rounded-lg overflow-hidden shadow-md transform mb-6">
                <Receipt 
                  ref={componentRef} 
-                 cartItems={lastOrder.items} 
-                 subtotal={lastOrder.subtotal} 
-                 vat={lastOrder.vat} 
-                 total={lastOrder.total} 
-                 recipient={lastOrder.recipient}
+                 cartItems={lastOrder?.items || []} 
+                 subtotal={lastOrder?.subtotal || 0} 
+                 vat={lastOrder?.vat || 0} 
+                 total={lastOrder?.total || 0} 
+                 recipient={lastOrder?.recipient || ''}
                />
             </div>
 

@@ -1,8 +1,8 @@
-import { forwardRef } from 'react';
+import { forwardRef, useMemo } from 'react';
 
-const Receipt = forwardRef(({ cartItems, subtotal, vat, total, recipient }, ref) => {
-  const date = new Date().toLocaleString();
-  const receiptId = Math.random().toString(36).substr(2, 9).toUpperCase();
+const Receipt = forwardRef(({ cartItems, subtotal, vat, total, recipient, orderId, orderDate }, ref) => {
+  const date = useMemo(() => orderDate || new Date().toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }), [orderDate]);
+  const receiptId = useMemo(() => orderId || Math.random().toString(36).substring(2, 9).toUpperCase(), [orderId]);
 
   return (
     <div ref={ref} className="bg-white p-8 max-w-sm mx-auto font-mono text-slate-800 border shadow-sm print:shadow-none print:border-none">

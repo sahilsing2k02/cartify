@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../utils/api';
 
 const ChangePasswordModal = ({ isOpen, onClose }) => {
@@ -9,6 +9,16 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e) => {
@@ -18,6 +28,11 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
 
     if (newPassword.length < 6) {
       setError('New password must be at least 6 characters long.');
+      return;
+    }
+
+    if (newPassword === currentPassword) {
+      setError('New password cannot be identical to current password.');
       return;
     }
 

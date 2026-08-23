@@ -7,12 +7,43 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const [authError, setAuthError] = useState('');
+
   useEffect(() => {
     const userInfo = localStorage.getItem('userInfo');
     if (userInfo) {
-      setUser(JSON.parse(userInfo));
+      try {
+        const parsed = JSON.parse(userInfo);
+        if (parsed.token) {
+          const payload = JSON.parse(atob(parsed.token.split('.')[1]));
+          if (payload.exp && payload.exp * 1000 < Date.now()) {
+            localStorage.removeItem('userInfo');
+            setUser(null);
+          } else {
+            setUser(parsed);
+          }
+        } else {
+          setUser(parsed);
+        }
+      } catch (err) {
+        localStorage.removeItem('userInfo');
+        setUser(null);
+      }
     }
     setLoading(false);
+
+    const handleUnauthorized = (e) => {
+      setUser(null);
+      localStorage.removeItem('userInfo');
+      if (e.detail?.message) {
+        setAuthError(e.detail.message);
+      }
+    };
+
+    window.addEventListener('cartify:unauthorized', handleUnauthorized);
+    return () => {
+      window.removeEventListener('cartify:unauthorized', handleUnauthorized);
+    };
   }, []);
 
   const login = async (username, password) => {
@@ -63,7 +94,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, loading, authError, setAuthError }}>
       {children}
     </AuthContext.Provider>
   );

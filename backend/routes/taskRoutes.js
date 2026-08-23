@@ -7,21 +7,25 @@ const { protect, adminOnly } = require('../middleware/authMiddleware');
 // @desc    Create a new packing/delivery task
 // @access  Private/Employer
 router.post('/', protect, adminOnly, async (req, res) => {
-  console.log('POST /api/tasks hit');
   const { recipient, items } = req.body;
   try {
-    if (!recipient || !items || items.length === 0) {
-      return res.status(400).json({ message: 'Recipient and items are required' });
+    if (!recipient || !items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: 'Recipient and at least one item are required' });
     }
+    const formattedItems = items.map(i => ({
+      item: i.item || i._id,
+      quantity: Number(i.quantity) || 1
+    }));
     const task = new Task({
       recipient,
-      items,
+      items: formattedItems,
       createdBy: req.user.id
     });
     const createdTask = await task.save();
     res.status(201).json(createdTask);
   } catch (error) {
-    res.status(500).json({ message: 'Server error creating task' });
+    console.error('Task creation error:', error);
+    res.status(400).json({ message: error.message || 'Error creating task' });
   }
 });
 

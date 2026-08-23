@@ -16,7 +16,7 @@ const protect = async (req, res, next) => {
         return res.status(403).json({ message: 'This account has been blocked by an administrator.' });
       }
 
-      req.user = decoded;
+      req.user = { id: user._id.toString(), role: user.role, username: user.username };
       return next();
     } catch (error) {
       console.error(error);

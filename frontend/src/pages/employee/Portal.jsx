@@ -70,20 +70,34 @@ const Portal = () => {
 
   const handoffTaskToCheckout = (task) => {
     const taskMarks = markedItems[task._id] || {};
+    let hasDeletedItem = false;
+
     const filteredItems = task.items
       .filter(i => taskMarks[getItemId(i)])
+      .filter(i => {
+        const inventoryItem = typeof i.item === 'object' ? i.item : null;
+        if (!inventoryItem) {
+          hasDeletedItem = true;
+          return false;
+        }
+        return true;
+      })
       .map(i => {
         const inventoryItem = typeof i.item === 'object' ? i.item : null;
         return {
           _id: getItemId(i),
-          name: i.name || inventoryItem?.name,
-          price: inventoryItem?.price ?? i.price ?? 0,
+          name: inventoryItem?.name || i.name || 'Unknown Item',
+          price: inventoryItem?.price ?? 0,
           quantity: i.quantity,
         };
       });
 
+    if (hasDeletedItem) {
+      alert('Note: Some checked items were removed from store inventory and were excluded from checkout.');
+    }
+
     if (filteredItems.length === 0) {
-      alert('Please tick at least one item to proceed to checkout.');
+      alert('Please tick at least one valid store item to proceed to checkout.');
       return;
     }
     setCart(filteredItems);
@@ -282,7 +296,9 @@ const Portal = () => {
                                 onChange={() => toggleItemMark(task._id, itemId)}
                                 className="w-4 h-4 rounded border-slate-300 cursor-pointer accent-indigo-600"
                               />
-                              <span className={isMarked ? 'line-through opacity-50' : ''}>{i.item?.name}</span>
+                              <span className={isMarked ? 'line-through opacity-50' : i.item?.name ? '' : 'text-red-500 font-normal'}>
+                                {i.item?.name || '[Removed Item]'}
+                              </span>
                             </div>
                             <span className="bg-white border border-slate-200 px-2 py-0.5 rounded text-[10px] tabular-nums shadow-sm">x{i.quantity}</span>
                           </li>
@@ -365,9 +381,9 @@ const Portal = () => {
                       </div>
                       <div className="flex flex-wrap gap-2 ml-5 mb-3">
                         {task.items.map((i, idx) => (
-                          <span key={idx} className="inline-flex items-center gap-1.5 bg-slate-100 px-2.5 py-1 rounded-lg text-[10px] font-bold text-slate-600">
+                          <span key={idx} className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold ${i.item?.name ? 'bg-slate-100 text-slate-600' : 'bg-red-50 text-red-500 border border-red-100'}`}>
                             <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-                            {i.item?.name} <span className="text-slate-400">×{i.quantity}</span>
+                            {i.item?.name || '[Removed Item]'} <span className="text-slate-400">×{i.quantity}</span>
                           </span>
                         ))}
                       </div>

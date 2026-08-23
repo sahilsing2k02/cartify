@@ -9,8 +9,15 @@ const Login = () => {
   const [role, setRole] = useState('employee');
   const [error, setError] = useState('');
   
-  const { login, register, user } = useContext(AuthContext);
+  const { login, register, user, authError, setAuthError } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (authError) {
+      setError(authError);
+      setAuthError('');
+    }
+  }, [authError, setAuthError]);
 
   useEffect(() => {
     if (user) {
@@ -126,6 +133,30 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
+
+            {isRegistering && (
+              <div className="animate-fade-in">
+                <label className={labelClass}>
+                  Account Role
+                </label>
+                <div className="grid grid-cols-2 gap-3 p-1 bg-red-50/50 rounded-xl border border-red-100">
+                  <button
+                    type="button"
+                    onClick={() => setRole('employee')}
+                    className={`py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${role === 'employee' ? 'bg-red-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                  >
+                    Employee
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRole('admin')}
+                    className={`py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${role === 'admin' ? 'bg-red-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                  >
+                    Employer
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div>
               <button

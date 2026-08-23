@@ -17,8 +17,8 @@ const generateToken = (id, role) => {
 // @desc    Register a new user
 // @access  Public
 router.post('/register', async (req, res) => {
-  const { username, password } = req.body;
-  const role = 'employee';
+  const { username, password, role: requestedRole } = req.body;
+  const role = (requestedRole === 'admin' || requestedRole === 'employer') ? 'admin' : 'employee';
 
   try {
     const userExists = await User.findOne({ username });
@@ -36,6 +36,11 @@ router.post('/register', async (req, res) => {
     });
 
     if (user) {
+      await Session.updateMany(
+        { user: user._id, logoutTime: null },
+        { logoutTime: new Date() }
+      );
+
       // Create session activity log record on registration since they log in immediately
       const session = await Session.create({
         user: user._id,
@@ -76,6 +81,12 @@ router.post('/login', async (req, res) => {
     }
 
     if (await bcrypt.compare(password, user.password)) {
+      // Auto-close any previous unclosed sessions for this user
+      await Session.updateMany(
+        { user: user._id, logoutTime: null },
+        { logoutTime: new Date() }
+      );
+
       // Create session activity log record in MongoDB
       const session = await Session.create({
         user: user._id,

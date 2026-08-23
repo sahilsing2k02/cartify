@@ -24,11 +24,17 @@ router.post('/', protect, adminOnly, async (req, res) => {
     if (!name || price === undefined) {
       return res.status(400).json({ message: 'Name and price are required' });
     }
-    const item = new Item({ name, price });
+    if (Number(price) < 0) {
+      return res.status(400).json({ message: 'Price cannot be negative' });
+    }
+    const item = new Item({ name, price: Number(price) });
     const createdItem = await item.save();
     res.status(201).json(createdItem);
   } catch (error) {
-    res.status(500).json({ message: 'Server error creating item' });
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ message: error.message });
+    }
+    res.status(500).json({ message: error.message || 'Server error creating item' });
   }
 });
 
@@ -43,13 +49,20 @@ router.put('/:id', protect, adminOnly, async (req, res) => {
       return res.status(404).json({ message: 'Item not found' });
     }
 
+    if (price !== undefined && Number(price) < 0) {
+      return res.status(400).json({ message: 'Price cannot be negative' });
+    }
+
     if (name) item.name = name;
-    if (price !== undefined) item.price = price;
+    if (price !== undefined) item.price = Number(price);
 
     const updatedItem = await item.save();
     res.json(updatedItem);
   } catch (error) {
-    res.status(500).json({ message: 'Server error updating item' });
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ message: error.message });
+    }
+    res.status(500).json({ message: error.message || 'Server error updating item' });
   }
 });
 
@@ -65,7 +78,7 @@ router.delete('/:id', protect, adminOnly, async (req, res) => {
     await item.deleteOne();
     res.json({ message: 'Item removed' });
   } catch (error) {
-    res.status(500).json({ message: 'Server error deleting item' });
+    res.status(500).json({ message: error.message || 'Server error deleting item' });
   }
 });
 
@@ -75,15 +88,18 @@ router.delete('/:id', protect, adminOnly, async (req, res) => {
 router.put('/:id/stock', protect, adminOnly, async (req, res) => {
   const { stock } = req.body;
   try {
+    if (stock === undefined || Number(stock) < 0) {
+      return res.status(400).json({ message: 'Stock must be a non-negative number' });
+    }
     const item = await Item.findById(req.params.id);
     if (!item) return res.status(404).json({ message: 'Item not found' });
     
-    item.stock = stock;
-    item.reportedOutOfStock = stock === 0; // Auto-reset if stock added
+    item.stock = Number(stock);
+    item.reportedOutOfStock = Number(stock) === 0; // Auto-reset if stock added
     const updatedItem = await item.save();
     res.json(updatedItem);
   } catch (error) {
-    res.status(500).json({ message: 'Server error updating stock' });
+    res.status(500).json({ message: error.message || 'Server error updating stock' });
   }
 });
 

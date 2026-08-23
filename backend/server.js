@@ -33,17 +33,28 @@ const connectDB = async () => {
     return;
   }
 
-  const connectionString = MONGO_URI || 'mongodb://127.0.0.1:27017/cartify';
+  if (MONGO_URI) {
+    try {
+      await mongoose.connect(MONGO_URI, {
+        serverSelectionTimeoutMS: 3000
+      });
+      isConnected = true;
+      console.log('✅ Primary MongoDB connected successfully!');
+      return;
+    } catch (primaryError) {
+      console.warn(`⚠️ Primary MongoDB Atlas connection notice: ${primaryError.message}. Connecting to local fallback...`);
+    }
+  }
 
   try {
-    await mongoose.connect(connectionString, {
-      serverSelectionTimeoutMS: 5000
+    await mongoose.connect('mongodb://127.0.0.1:27017/cartify', {
+      serverSelectionTimeoutMS: 3000
     });
     isConnected = true;
-    console.log('✅ MongoDB connected successfully!');
-  } catch (error) {
+    console.log('✅ Local MongoDB connected successfully!');
+  } catch (localError) {
     isConnected = false;
-    console.error('❌ MongoDB connection error:', error.message);
+    console.error('❌ Local MongoDB connection error:', localError.message);
   }
 };
 

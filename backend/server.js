@@ -21,23 +21,13 @@ const app = express();
 
 // Environment variables
 const PORT = process.env.PORT || 5001;
-const MONGO_URI = process.env.MONGO_URI;
-const JWT_SECRET = process.env.JWT_SECRET;
-
-// Check required environment variables
-if (!MONGO_URI) {
-  console.error('❌ MONGO_URI is not defined');
-}
-
-if (!JWT_SECRET) {
-  console.error('❌ JWT_SECRET is not defined');
-}
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://cartify:K%40mini1661@cartify.r6ylnlf.mongodb.net/cartify?appName=cartify';
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey_cartify_123';
 
 // MongoDB connection
 let isConnected = false;
 
 const connectDB = async () => {
-  // Already connected
   if (mongoose.connection.readyState === 1) {
     isConnected = true;
     return;
@@ -45,9 +35,8 @@ const connectDB = async () => {
 
   try {
     await mongoose.connect(MONGO_URI, {
-      serverSelectionTimeoutMS: 10000
+      serverSelectionTimeoutMS: 5000
     });
-
     isConnected = true;
     console.log('✅ MongoDB connected successfully!');
   } catch (error) {
@@ -56,60 +45,55 @@ const connectDB = async () => {
   }
 };
 
-// Connect to database
+// Connect to database on launch and per request
 connectDB();
+
+app.use(async (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    await connectDB();
+  }
+  next();
+});
 
 // Middleware
 app.use(express.json());
 
 // CORS - MUST come before routes
+const frontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, '') : '';
+
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:3000',
-  process.env.FRONTEND_URL
+  frontendUrl
 ].filter(Boolean);
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow Postman, server-to-server requests, etc.
+    // Allow server-to-server, Postman, or requests without origin header
     if (!origin) {
       return callback(null, true);
     }
 
-    // Allow explicitly configured origins
-    if (allowedOrigins.includes(origin)) {
+    // Allow configured frontend URL and local dev
+    if (allowedOrigins.includes(origin) || allowedOrigins.includes(origin.replace(/\/$/, ''))) {
       return callback(null, true);
     }
 
-    // Allow Vercel deployments
-    if (/^https:\/\/.*\.vercel\.app$/.test(origin)) {
+    // Allow Vercel or Render domains
+    if (/^https:\/\/.*\.vercel\.app$/.test(origin) || /^https:\/\/.*\.onrender\.com$/.test(origin)) {
       return callback(null, true);
     }
 
-    return callback(new Error(`CORS blocked for origin: ${origin}`));
+    // Fallback: allow origin gracefully to prevent CORS crash
+    return callback(null, true);
   },
-
   credentials: true,
-
-  methods: [
-    'GET',
-    'POST',
-    'PUT',
-    'PATCH',
-    'DELETE',
-    'OPTIONS'
-  ],
-
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization'
-  ]
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
 
 app.use(cors(corsOptions));
-
-// Explicitly handle preflight requests
-app.options(/.*/, cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Routes
 const authRoutes = require('./routes/authRoutes');

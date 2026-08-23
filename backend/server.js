@@ -30,7 +30,24 @@ if (!process.env.MONGO_URI) {
 }
 
 // Middleware
-app.use(cors());
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:5173',
+  'http://localhost:3000',
+  /\.vercel\.app$/
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.some(o => typeof o === 'string' ? o === origin : o.test(origin))) {
+      callback(null, true);
+    } else {
+      callback(null, true);
+    }
+  },
+  credentials: true
+}));
+
 app.use(express.json());
 
 // Routes
@@ -46,15 +63,16 @@ app.use('/api/tasks', taskRoutes);
 app.get('/', (req, res) => {
   res.json({
     status: 'online',
-    system: 'Cartify Backend API',
-    frontend: 'http://localhost:5173'
+    system: 'Cartify Backend API (Render Web Service)',
+    frontend: process.env.FRONTEND_URL || 'http://localhost:5173'
   });
 });
 
 // Fallback for non-API web browser navigation (redirect to Vite frontend UI)
 app.use((req, res, next) => {
   if (!req.path.startsWith('/api')) {
-    return res.redirect(`http://localhost:5173${req.originalUrl}`);
+    const frontendTarget = process.env.FRONTEND_URL || 'http://localhost:5173';
+    return res.redirect(`${frontendTarget}${req.originalUrl}`);
   }
   res.status(404).json({ message: `Cannot ${req.method} ${req.originalUrl}` });
 });

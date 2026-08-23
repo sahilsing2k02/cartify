@@ -19,10 +19,10 @@ try {
 
 const app = express();
 
-// Environment variables
+// Environment variables (strict process.env reading)
 const PORT = process.env.PORT || 5001;
-const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://cartify:K%40mini1661@cartify.r6ylnlf.mongodb.net/cartify?appName=cartify';
-const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey_cartify_123';
+const MONGO_URI = process.env.MONGO_URI;
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // MongoDB connection
 let isConnected = false;
@@ -33,8 +33,10 @@ const connectDB = async () => {
     return;
   }
 
+  const connectionString = MONGO_URI || 'mongodb://127.0.0.1:27017/cartify';
+
   try {
-    await mongoose.connect(MONGO_URI, {
+    await mongoose.connect(connectionString, {
       serverSelectionTimeoutMS: 5000
     });
     isConnected = true;

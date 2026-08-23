@@ -5,7 +5,7 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const dns = require('dns');
 
-// Use IPv4 first for DNS resolution to ensure SRV record resolution works smoothly across OS environments
+// Force IPv4 first DNS lookup for Windows Node compatibility with Atlas SRV
 try {
   if (dns.setDefaultResultOrder) {
     dns.setDefaultResultOrder('ipv4first');
@@ -28,25 +28,34 @@ const connectDB = async () => {
     return;
   }
   try {
-    await mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 3000 });
+    await mongoose.connect(MONGO_URI, { serverSelectionTimeoutMS: 5000 });
     isConnected = true;
-    console.log('✅ MongoDB connected');
+    console.log('✅ MongoDB connected successfully!');
   } catch (primaryError) {
-    try {
-      const directUri = MONGO_URI
-        .replace('mongodb+srv://', 'mongodb://')
-        .replace('@cartify.r6ylnlf.mongodb.net/', '@cartify-shard-00-00.r6ylnlf.mongodb.net:27017,cartify-shard-00-01.r6ylnlf.mongodb.net:27017,cartify-shard-00-02.r6ylnlf.mongodb.net:27017/') + '&ssl=true&authSource=admin';
-      await mongoose.connect(directUri, { serverSelectionTimeoutMS: 3000 });
-      isConnected = true;
-      console.log('✅ MongoDB connected via Direct Seed');
-    } catch (directError) {
+    console.warn(`⚠️ Primary MongoDB Atlas connection notice: ${primaryError.message}`);
+    if (MONGO_URI.includes('mongodb+srv://')) {
       try {
-        await mongoose.connect('mongodb://127.0.0.1:27017/cartify', { serverSelectionTimeoutMS: 2000 });
-        isConnected = true;
-        console.log('✅ Connected to Local MongoDB');
-      } catch (localError) {
-        console.warn('⚠️ DB Connection pending');
+        const clusterDomain = MONGO_URI.split('@')[1]?.split('/')[0];
+        if (clusterDomain) {
+          const baseName = clusterDomain.split('.')[0];
+          const domainSuffix = clusterDomain.substring(baseName.length);
+          const directHosts = `${baseName}-shard-00-00${domainSuffix}:27017,${baseName}-shard-00-01${domainSuffix}:27017,${baseName}-shard-00-02${domainSuffix}:27017`;
+          const directUri = MONGO_URI.replace('mongodb+srv://', 'mongodb://').replace(clusterDomain, directHosts) + '&ssl=true&authSource=admin';
+          await mongoose.connect(directUri, { serverSelectionTimeoutMS: 5000 });
+          isConnected = true;
+          console.log('✅ MongoDB connected via Direct Seed Hosts!');
+          return;
+        }
+      } catch (e) {
+        // Continue to local fallback
       }
+    }
+    try {
+      await mongoose.connect('mongodb://127.0.0.1:27017/cartify', { serverSelectionTimeoutMS: 2500 });
+      isConnected = true;
+      console.log('✅ Connected to Local MongoDB fallback!');
+    } catch (localError) {
+      console.warn('⚠️ Local MongoDB fallback not active');
     }
   }
 };
@@ -56,12 +65,13 @@ app.use(async (req, res, next) => {
   next();
 });
 
-// Middleware
+// CORS Middleware
 const allowedOrigins = [
   process.env.FRONTEND_URL,
   'http://localhost:5173',
   'http://localhost:3000',
-  /\.vercel\.app$/
+  /\.vercel\.app$/,
+  /\.onrender\.com$/
 ].filter(Boolean);
 
 app.use(cors({
@@ -86,16 +96,17 @@ app.use('/api/auth', authRoutes);
 app.use('/api/items', itemRoutes);
 app.use('/api/tasks', taskRoutes);
 
-// Root route handler for API status
+// Health check & status endpoint
 app.get('/', (req, res) => {
   res.json({
     status: 'online',
-    system: 'Cartify Backend API (Render Web Service)',
+    system: 'Cartify Backend API Service',
+    database: isConnected ? 'connected' : 'connecting',
     frontend: process.env.FRONTEND_URL || 'http://localhost:5173'
   });
 });
 
-// Fallback for non-API web browser navigation (redirect to Vite frontend UI)
+// Fallback for non-API web browser navigation (redirect to frontend UI)
 app.use((req, res, next) => {
   if (!req.path.startsWith('/api')) {
     const frontendTarget = process.env.FRONTEND_URL || 'http://localhost:5173';
@@ -104,47 +115,13 @@ app.use((req, res, next) => {
   res.status(404).json({ message: `Cannot ${req.method} ${req.originalUrl}` });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 
 const startServer = async () => {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  await connectDB();
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Cartify Backend API running on http://0.0.0.0:${PORT}`);
   });
-
-  const primaryUri = process.env.MONGO_URI;
-  const localUri = 'mongodb://127.0.0.1:27017/cartify';
-
-  if (primaryUri) {
-    try {
-      await mongoose.connect(primaryUri, { serverSelectionTimeoutMS: 3000 });
-      console.log('✅ MongoDB Atlas connected successfully via SRV URI!');
-      return;
-    } catch (primaryError) {
-      console.warn(`⚠️  Atlas SRV connection failed (${primaryError.message}). Attempting direct Atlas connection...`);
-      
-      // Auto-construct direct non-SRV connection string for Atlas clusters
-      if (primaryUri.includes('mongodb+srv://')) {
-        try {
-          const directUri = primaryUri
-            .replace('mongodb+srv://', 'mongodb://')
-            .replace('@cartify.r6ylnlf.mongodb.net/', '@cartify-shard-00-00.r6ylnlf.mongodb.net:27017,cartify-shard-00-01.r6ylnlf.mongodb.net:27017,cartify-shard-00-02.r6ylnlf.mongodb.net:27017/') + '&ssl=true&authSource=admin';
-          
-          await mongoose.connect(directUri, { serverSelectionTimeoutMS: 3000 });
-          console.log('✅ MongoDB Atlas connected successfully via Direct Seed Hosts!');
-          return;
-        } catch (directError) {
-          console.warn(`⚠️  Direct Atlas connection attempt failed (${directError.message}). Attempting local MongoDB...`);
-        }
-      }
-    }
-  }
-
-  try {
-    await mongoose.connect(localUri, { serverSelectionTimeoutMS: 3000 });
-    console.log('✅ Connected successfully to Local MongoDB!');
-  } catch (localError) {
-    console.warn('⚠️  Local MongoDB instance not detected. Running server in HTTP mode.');
-  }
 };
 
 startServer();

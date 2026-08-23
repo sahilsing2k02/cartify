@@ -40,7 +40,7 @@ const seedDB = async () => {
     const salt = await bcrypt.genSalt(10);
     
     if (!adminExists) {
-      const hashedEmployerPassword = await bcrypt.hash('admin1234', salt);
+      const hashedEmployerPassword = await bcrypt.hash('admin123', salt);
       await User.create({
         username: 'admin',
         password: hashedEmployerPassword,

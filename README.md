@@ -208,7 +208,7 @@ npm run dev
 
 | Portal | Role | Username | Password |
 |---|---|---|---|
-| **Employer Portal** | Admin / Employer | `admin` | `admin1234` |
+| **Employer Portal** | Admin / Employer | `admin` | `admin123` |
 | **Employee Portal** | Staff / Employee | `staff` | `employee123` |
 
 *Note: You can also register a new Employer or Employee account directly from the Sign In page by toggling to **Register**.*

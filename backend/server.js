@@ -19,10 +19,10 @@ try {
 
 const app = express();
 
-// Environment variables (strict process.env reading)
+// Environment variables (strict process.env reading with fallback)
 const PORT = process.env.PORT || 5001;
-const MONGO_URI = process.env.MONGO_URI;
-const JWT_SECRET = process.env.JWT_SECRET;
+const MONGO_URI = process.env.MONGO_URI || 'mongodb+srv://cartify:K%40mini1661@cartify.r6ylnlf.mongodb.net/cartify?appName=cartify';
+const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey_cartify_123';
 
 // MongoDB connection
 let isConnected = false;
@@ -36,7 +36,7 @@ const connectDB = async () => {
   if (MONGO_URI) {
     try {
       await mongoose.connect(MONGO_URI, {
-        serverSelectionTimeoutMS: 3000
+        serverSelectionTimeoutMS: 10000
       });
       isConnected = true;
       console.log('✅ Primary MongoDB connected successfully!');
@@ -134,15 +134,16 @@ app.use((req, res) => {
   });
 });
 
-// Start server
+// Start server (only when running standalone server, not inside Vercel serverless lambda)
 const startServer = async () => {
   await connectDB();
-
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Cartify Backend API running on port ${PORT}`);
   });
 };
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+}
 
 module.exports = app;

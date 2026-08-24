@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const API_URL = typeof window !== 'undefined' && window.location.hostname === 'localhost'
   ? 'http://localhost:5001'
-  : (import.meta.env.VITE_API_URL || 'https://cartify-api-gtv7.onrender.com);
+  : (import.meta.env.VITE_API_URL || 'https://cartify-api-gtv7.onrender.com');
 
 const api = axios.create({
   baseURL: API_URL,

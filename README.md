@@ -1,5 +1,8 @@
 <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/b8ea1efb-33b2-483f-9f45-76d53580b53f" /># 🛒 Cartify — Inventory & Logistics Management System
 
+**🟢 Live Demo:** [https://cartify-tan.vercel.app](https://cartify-tan.vercel.app)
+*(Backend API powered by Render & MongoDB Atlas Cloud)*
+
 Cartify is a full-stack **MERN** (MongoDB, Express, React 19, Node.js) web application built for retail, warehouse, and POS operations. It features role-based access control (Employers & Employees), inventory stock management, live sales checkout with thermal receipt printing, task distribution manifests, and real-time security access logs.
 
 ---

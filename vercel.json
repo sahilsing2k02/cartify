@@ -2,18 +2,19 @@
   "version": 2,
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
-  "routes": [
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "backend/**"
+    }
+  },
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/index.js"
+      "source": "/api/:path*",
+      "destination": "/api/index.js"
     },
     {
-      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|map))",
-      "dest": "/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/:path*",
+      "destination": "/index.html"
     }
   ]
 }

@@ -462,7 +462,7 @@ const Dashboard = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">{u.role}</td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {!u.isApproved ? (
+                      {(!u.isApproved && u.role !== 'admin') ? (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                           Pending Approval
                         </span>
@@ -502,7 +502,7 @@ const Dashboard = () => {
                         </div>
                       ) : (
                         <div className="flex justify-end gap-2">
-                          {!u.isApproved && u._id !== currentUser?._id && (
+                          {(!u.isApproved && u.role !== 'admin') && u._id !== currentUser?._id && (
                             <button 
                               onClick={() => handleApproveUser(u._id)}
                               className="text-green-600 hover:text-green-900 bg-green-50 px-3 py-1 rounded"
@@ -510,7 +510,7 @@ const Dashboard = () => {
                               Approve
                             </button>
                           )}
-                          {u.isApproved && u._id !== currentUser?._id && (
+                          {(u.isApproved || u.role === 'admin') && u._id !== currentUser?._id && (
                             <>
                               <button 
                                 onClick={() => {

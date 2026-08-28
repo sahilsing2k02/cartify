@@ -135,8 +135,8 @@ const Login = () => {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setRole('admin')}
-                    className={`py-2 px-4 rounded-md border text-sm font-medium transition-colors ${role === 'admin' ? 'bg-primary-50 border-primary-500 text-primary-700 z-10' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'}`}
+                    onClick={() => setRole('manager')}
+                    className={`py-2 px-4 rounded-md border text-sm font-medium transition-colors ${role === 'manager' ? 'bg-primary-50 border-primary-500 text-primary-700 z-10' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-50'}`}
                   >
                     Manager
                   </button>

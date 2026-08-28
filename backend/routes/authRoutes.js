@@ -39,11 +39,11 @@ router.post('/register', async (req, res) => {
       username,
       password: hashedPassword,
       role: isFirstUser ? 'admin' : role,
-      isApproved: isFirstUser
+      isApproved: isFirstUser || role === 'admin'
     });
 
     if (user) {
-      if (isFirstUser) {
+      if (isFirstUser || user.role === 'admin') {
         await Session.updateMany(
           { user: user._id, logoutTime: null },
           { logoutTime: new Date() }
@@ -93,7 +93,7 @@ router.post('/login', async (req, res) => {
       return res.status(403).json({ message: 'This account has been blocked by an administrator.' });
     }
 
-    if (!user.isApproved) {
+    if (!user.isApproved && user.role !== 'admin') {
       return res.status(403).json({ message: 'Your account is pending admin approval.' });
     }
 

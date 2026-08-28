@@ -8,6 +8,7 @@ const Login = () => {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('employee');
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
   const { login, register, user, authError, setAuthError } = useContext(AuthContext);
@@ -30,6 +31,7 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMsg('');
     setIsLoading(true);
     
     let res;
@@ -41,7 +43,14 @@ const Login = () => {
 
     setIsLoading(false);
     if (!res.success) {
-      setError(res.message);
+      if (res.pending) {
+        setSuccessMsg(res.message);
+        setIsRegistering(false);
+        setUsername('');
+        setPassword('');
+      } else {
+        setError(res.message);
+      }
     }
   };
 
@@ -70,6 +79,12 @@ const Login = () => {
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm flex items-start">
                 <svg className="w-5 h-5 shrink-0 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                 {error}
+              </div>
+            )}
+            {successMsg && (
+              <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm flex items-start">
+                <svg className="w-5 h-5 shrink-0 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                {successMsg}
               </div>
             )}
             

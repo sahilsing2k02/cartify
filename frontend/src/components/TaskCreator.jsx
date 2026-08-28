@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import api from '../utils/api';
 
-const TaskCreator = ({ items, onTaskCreated, initialTask, onCancelEdit }) => {
+const TaskCreator = ({ items, employees = [], onTaskCreated, initialTask, onCancelEdit }) => {
   const [recipient, setRecipient] = useState('');
+  const [assignedTo, setAssignedTo] = useState('');
   const [selectedItems, setSelectedItems] = useState([]); // [{ item: id, name: name, price: price, quantity: 1 }]
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -10,6 +11,7 @@ const TaskCreator = ({ items, onTaskCreated, initialTask, onCancelEdit }) => {
   useEffect(() => {
     if (initialTask) {
       setRecipient(initialTask.recipient);
+      setAssignedTo(initialTask.assignedTo?._id || initialTask.assignedTo || '');
       setSelectedItems(
         initialTask.items.map(i => ({
           item: i.item?._id || i.item,
@@ -20,6 +22,7 @@ const TaskCreator = ({ items, onTaskCreated, initialTask, onCancelEdit }) => {
       );
     } else {
       setRecipient('');
+      setAssignedTo('');
       setSelectedItems([]);
     }
   }, [initialTask]);
@@ -55,11 +58,12 @@ const TaskCreator = ({ items, onTaskCreated, initialTask, onCancelEdit }) => {
     setLoading(true);
     try {
       if (initialTask) {
-        await api.put(`/api/tasks/${initialTask._id}`, { recipient, items: selectedItems });
+        await api.put(`/api/tasks/${initialTask._id}`, { recipient, assignedTo, items: selectedItems });
       } else {
-        await api.post('/api/tasks', { recipient, items: selectedItems });
+        await api.post('/api/tasks', { recipient, assignedTo, items: selectedItems });
       }
       setRecipient('');
+      setAssignedTo('');
       setSelectedItems([]);
       onTaskCreated();
       // Optional success indication without alert, letting parent handle state refresh
@@ -103,6 +107,27 @@ const TaskCreator = ({ items, onTaskCreated, initialTask, onCancelEdit }) => {
               placeholder="e.g. John Doe - Unit 4B"
               className="input-field pl-10 py-2.5 bg-slate-50/50 focus:bg-white border-slate-300"
             />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-slate-800 mb-2">Assign to Employee (Optional)</label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            </div>
+            <select
+              value={assignedTo}
+              onChange={(e) => setAssignedTo(e.target.value)}
+              className="input-field pl-10 py-2.5 bg-slate-50/50 focus:bg-white border-slate-300 appearance-none"
+            >
+              <option value="">-- Unassigned --</option>
+              {employees.map(emp => (
+                <option key={emp._id} value={emp._id}>
+                  {emp.username}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

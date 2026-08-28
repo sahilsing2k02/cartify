@@ -259,7 +259,15 @@ const Portal = () => {
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center gap-3">
                       <div>
-                        <h4 className="font-medium text-slate-900">{task.recipient}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium text-slate-900">{task.recipient}</h4>
+                          {task.assignedTo && (
+                            <span className="bg-primary-50 text-primary-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                              {task.assignedTo.username}
+                            </span>
+                          )}
+                        </div>
                         <span className={`inline-flex mt-1 items-center px-2 py-0.5 rounded text-xs font-medium ${task.status === 'packed' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'}`}>{task.status === 'packed' ? 'Packed' : 'Pending'}</span>
                       </div>
                     </div>

@@ -30,6 +30,11 @@ const taskSchema = new mongoose.Schema(
       type: String,
       default: ''
     },
+    assignedTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: false
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

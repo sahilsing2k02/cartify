@@ -19,7 +19,9 @@ const generateToken = (id, role) => {
 // @access  Public
 router.post('/register', async (req, res) => {
   const { username, password, role: requestedRole } = req.body;
-  const role = (requestedRole === 'admin' || requestedRole === 'employer') ? 'admin' : 'employee';
+  let role = 'employee';
+  if (requestedRole === 'admin' || requestedRole === 'employer') role = 'admin';
+  if (requestedRole === 'manager') role = 'manager';
 
   try {
     const userExists = await User.findOne({ username });
@@ -30,32 +32,41 @@ router.post('/register', async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+    const userCount = await User.countDocuments();
+    const isFirstUser = userCount === 0;
+
     const user = await User.create({
       username,
       password: hashedPassword,
-      role
+      role: isFirstUser ? 'admin' : role,
+      isApproved: isFirstUser
     });
 
     if (user) {
-      await Session.updateMany(
-        { user: user._id, logoutTime: null },
-        { logoutTime: new Date() }
-      );
+      if (isFirstUser) {
+        await Session.updateMany(
+          { user: user._id, logoutTime: null },
+          { logoutTime: new Date() }
+        );
 
-      // Create session activity log record on registration since they log in immediately
-      const session = await Session.create({
-        user: user._id,
-        username: user.username,
-        loginTime: new Date()
-      });
+        const session = await Session.create({
+          user: user._id,
+          username: user.username,
+          loginTime: new Date()
+        });
 
-      res.status(201).json({
-        _id: user._id,
-        username: user.username,
-        role: user.role,
-        token: generateToken(user._id, user.role),
-        sessionId: session._id // Send sessionId to frontend to track exit time
-      });
+        res.status(201).json({
+          _id: user._id,
+          username: user.username,
+          role: user.role,
+          token: generateToken(user._id, user.role),
+          sessionId: session._id
+        });
+      } else {
+        res.status(202).json({
+          message: 'Registration successful. Your account is pending admin approval.'
+        });
+      }
     } else {
       res.status(400).json({ message: 'Invalid user data' });
     }
@@ -80,6 +91,10 @@ router.post('/login', async (req, res) => {
 
     if (user.isBlocked) {
       return res.status(403).json({ message: 'This account has been blocked by an administrator.' });
+    }
+
+    if (!user.isApproved) {
+      return res.status(403).json({ message: 'Your account is pending admin approval.' });
     }
 
     if (await bcrypt.compare(password, user.password)) {
@@ -203,8 +218,8 @@ router.put('/users/:id/block', protect, adminOnly, async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    if (user.role === 'admin') {
-      return res.status(400).json({ message: 'Cannot block an admin user' });
+    if (user.role === 'admin' && user._id.toString() === req.user.id) {
+      return res.status(400).json({ message: 'Cannot block yourself' });
     }
     user.isBlocked = true;
     await user.save();
@@ -224,12 +239,108 @@ router.put('/users/:id/unblock', protect, adminOnly, async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
+    if (user.role === 'admin' && user._id.toString() === req.user.id) {
+      return res.status(400).json({ message: 'Cannot unblock yourself' });
+    }
     user.isBlocked = false;
     await user.save();
     res.json({ message: `User ${user.username} unblocked successfully`, user });
   } catch (error) {
     console.error('Unblock user error:', error);
     res.status(500).json({ message: 'Server error unblocking user' });
+  }
+});
+
+// @route   GET /api/auth/users
+// @desc    Get all users
+// @access  Private/Admin
+router.get('/users', protect, adminOnly, async (req, res) => {
+  try {
+    const users = await User.find({}).sort({ createdAt: -1 });
+    res.json(users);
+  } catch (error) {
+    console.error('Fetch users error:', error);
+    res.status(500).json({ message: 'Server error fetching users' });
+  }
+});
+
+// @route   PUT /api/auth/users/:id/approve
+// @desc    Approve a user registration
+// @access  Private/Admin
+router.put('/users/:id/approve', protect, adminOnly, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.isApproved = true;
+    await user.save();
+    res.json({ message: `User ${user.username} approved successfully`, user });
+  } catch (error) {
+    console.error('Approve user error:', error);
+    res.status(500).json({ message: 'Server error approving user' });
+  }
+});
+
+// @route   PUT /api/auth/users/:id/admin-reset-password
+// @desc    Admin reset user password
+// @access  Private/Admin
+router.put('/users/:id/admin-reset-password', protect, adminOnly, async (req, res) => {
+  const { newPassword } = req.body;
+  
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({ message: 'New password must be at least 6 characters' });
+  }
+
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+    
+    // Log them out by closing their sessions
+    await Session.updateMany(
+      { user: user._id, logoutTime: null },
+      { logoutTime: new Date() }
+    );
+    
+    res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    console.error('Admin password reset error:', error);
+    res.status(500).json({ message: 'Server error resetting password' });
+  }
+});
+
+// @route   DELETE /api/auth/users/:id
+// @desc    Delete a user
+// @access  Private/Admin
+router.delete('/users/:id', protect, adminOnly, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.role === 'admin' && user._id.toString() === req.user.id) {
+      return res.status(403).json({ message: 'Cannot delete yourself' });
+    }
+
+    // Delete user
+    await User.deleteOne({ _id: user._id });
+    
+    // Delete all their sessions
+    await Session.deleteMany({ user: user._id });
+
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Delete user error:', error);
+    res.status(500).json({ message: 'Server error deleting user' });
   }
 });
 

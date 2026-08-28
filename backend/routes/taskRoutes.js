@@ -8,7 +8,7 @@ const { protect, adminOnly } = require('../middleware/authMiddleware');
 // @desc    Create a new packing/delivery task
 // @access  Private/Employer
 router.post('/', protect, adminOnly, async (req, res) => {
-  const { recipient, items } = req.body;
+  const { recipient, items, assignedTo } = req.body;
   try {
     if (!recipient || !items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ message: 'Recipient and at least one item are required' });
@@ -20,7 +20,8 @@ router.post('/', protect, adminOnly, async (req, res) => {
     const task = new Task({
       recipient,
       items: formattedItems,
-      createdBy: req.user.id
+      createdBy: req.user.id,
+      assignedTo: assignedTo || undefined
     });
     const createdTask = await task.save();
     res.status(201).json(createdTask);
@@ -38,6 +39,7 @@ router.get('/', protect, async (req, res) => {
   try {
     const tasks = await Task.find({})
       .populate('items.item')
+      .populate('assignedTo', 'username role')
       .sort({ createdAt: -1 });
     res.json(tasks);
   } catch (error) {
@@ -107,12 +109,13 @@ router.put('/:id/remark', protect, async (req, res) => {
 // @desc    Update a task (recipient and items)
 // @access  Private/Admin
 router.put('/:id', protect, adminOnly, async (req, res) => {
-  const { recipient, items } = req.body;
+  const { recipient, items, assignedTo } = req.body;
   try {
     const task = await Task.findById(req.params.id);
     if (!task) return res.status(404).json({ message: 'Task not found' });
 
     if (recipient) task.recipient = recipient;
+    if (assignedTo !== undefined) task.assignedTo = assignedTo || null;
     if (items) {
       task.items = items.map(i => ({
         item: i.item || i._id,

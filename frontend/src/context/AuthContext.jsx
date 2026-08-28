@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
         } else {
           setUser(parsed);
         }
-      } catch (err) {
+      } catch {
         localStorage.removeItem('userInfo');
         setUser(null);
       }
@@ -63,14 +63,19 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (username, password, role) => {
     try {
-      const { data } = await api.post('/api/auth/register', {
+      const res = await api.post('/api/auth/register', {
         username,
         password,
         role,
       });
 
-      setUser(data);
-      localStorage.setItem('userInfo', JSON.stringify(data));
+      if (res.status === 201) {
+        setUser(res.data);
+        localStorage.setItem('userInfo', JSON.stringify(res.data));
+        return { success: true };
+      } else if (res.status === 202) {
+        return { success: false, message: res.data.message, pending: true };
+      }
       return { success: true };
     } catch (error) {
       return { success: false, message: error.response?.data?.message || 'Registration failed' };

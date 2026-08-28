@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
+import { AuthContext } from '../../context/AuthContext';
 import api from '../../utils/api';
 import TaskCreator from '../../components/TaskCreator';
 
 const Dashboard = () => {
+  const { user: currentUser } = useContext(AuthContext);
   const [items, setItems] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [sessions, setSessions] = useState([]);
@@ -12,7 +14,10 @@ const Dashboard = () => {
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
   const [deleteConfirmTaskId, setDeleteConfirmTaskId] = useState(null);
-  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory', 'tasks', 'stock', or 'activity'
+  const [users, setUsers] = useState([]);
+  const [passwordResetUserId, setPasswordResetUserId] = useState(null);
+  const [newPasswordValue, setNewPasswordValue] = useState('');
+  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory', 'tasks', 'stock', 'users', or 'activity'
   const [error, setError] = useState('');
   const [stockInputs, setStockInputs] = useState({});
   const [inventorySearchTerm, setInventorySearchTerm] = useState('');
@@ -34,6 +39,15 @@ const Dashboard = () => {
     try {
       const res = await api.get('/api/tasks');
       setTasks(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const res = await api.get('/api/auth/users');
+      setUsers(res.data);
     } catch (err) {
       console.error(err);
     }
@@ -122,10 +136,51 @@ const Dashboard = () => {
     try {
       const endpoint = isBlocked ? `/api/auth/users/${userId}/unblock` : `/api/auth/users/${userId}/block`;
       await api.put(endpoint);
+      fetchUsers();
       fetchSessions();
     } catch (error) {
       console.error('Error toggling block state:', error);
       alert(error.response?.data?.message || 'Failed to update user access.');
+    }
+  };
+
+  const handleApproveUser = async (userId) => {
+    try {
+      await api.put(`/api/auth/users/${userId}/approve`);
+      fetchUsers();
+    } catch (error) {
+      console.error('Error approving user:', error);
+      alert(error.response?.data?.message || 'Failed to approve user.');
+    }
+  };
+
+  const handleAdminResetPassword = async (userId) => {
+    if (!newPasswordValue || newPasswordValue.length < 6) {
+      alert('Password must be at least 6 characters');
+      return;
+    }
+    try {
+      await api.put(`/api/auth/users/${userId}/admin-reset-password`, { newPassword: newPasswordValue });
+      setPasswordResetUserId(null);
+      setNewPasswordValue('');
+      alert('Password reset successfully');
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      alert(error.response?.data?.message || 'Failed to reset password.');
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('Are you sure you want to permanently delete this user and all their login session data? This action cannot be undone.')) {
+      return;
+    }
+    try {
+      await api.delete(`/api/auth/users/${userId}`);
+      fetchUsers();
+      fetchSessions();
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      alert(error.response?.data?.message || 'Failed to delete user.');
     }
   };
 
@@ -154,6 +209,12 @@ const Dashboard = () => {
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'stock' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
           >
             Stock
+          </button>
+          <button 
+            onClick={() => { setActiveTab('users'); fetchUsers(); }}
+            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === 'users' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            User Management
           </button>
           <button 
             onClick={() => { setActiveTab('activity'); fetchSessions(); }}
@@ -372,6 +433,126 @@ const Dashboard = () => {
             </table>
           </div>
         </div>
+      ) : activeTab === 'users' ? (
+        <div className="card">
+          <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+            <h3 className="font-medium text-slate-900">User Management</h3>
+            <button 
+              onClick={fetchUsers}
+              className="btn btn-secondary py-1 px-3 text-xs"
+            >
+              Refresh
+            </button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-200 text-left">
+              <thead className="bg-white">
+                <tr>
+                  <th className="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Username</th>
+                  <th className="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-3 text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-slate-200">
+                {users.map(u => (
+                  <tr key={u._id} className="hover:bg-slate-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-slate-900">{u.username}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 capitalize">{u.role}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {!u.isApproved ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                          Pending Approval
+                        </span>
+                      ) : u.isBlocked ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          Blocked
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Active
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      {passwordResetUserId === u._id ? (
+                        <div className="flex justify-end items-center gap-2">
+                          <input 
+                            type="text" 
+                            className="input-field py-1 text-sm max-w-[150px]" 
+                            placeholder="New password" 
+                            value={newPasswordValue}
+                            onChange={(e) => setNewPasswordValue(e.target.value)}
+                            autoFocus
+                          />
+                          <button 
+                            onClick={() => handleAdminResetPassword(u._id)}
+                            className="text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded shadow-sm"
+                          >
+                            Save
+                          </button>
+                          <button 
+                            onClick={() => setPasswordResetUserId(null)}
+                            className="text-slate-600 bg-slate-200 hover:bg-slate-300 px-3 py-1 rounded"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex justify-end gap-2">
+                          {!u.isApproved && u._id !== currentUser?._id && (
+                            <button 
+                              onClick={() => handleApproveUser(u._id)}
+                              className="text-green-600 hover:text-green-900 bg-green-50 px-3 py-1 rounded"
+                            >
+                              Approve
+                            </button>
+                          )}
+                          {u.isApproved && u._id !== currentUser?._id && (
+                            <>
+                              <button 
+                                onClick={() => {
+                                  setPasswordResetUserId(u._id);
+                                  setNewPasswordValue('');
+                                }}
+                                className="text-blue-600 hover:text-blue-900 bg-blue-50 px-3 py-1 rounded"
+                              >
+                                Reset Password
+                              </button>
+                              <button 
+                                onClick={() => handleToggleBlock(u._id, u.isBlocked)}
+                                className={`${u.isBlocked ? 'text-green-600 hover:text-green-900 bg-green-50' : 'text-orange-600 hover:text-orange-900 bg-orange-50'} px-3 py-1 rounded`}
+                              >
+                                {u.isBlocked ? 'Unblock' : 'Block'}
+                              </button>
+                            </>
+                          )}
+                          {u._id !== currentUser?._id && (
+                            <button 
+                              onClick={() => handleDeleteUser(u._id)}
+                              className="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded"
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+                {users.length === 0 && (
+                  <tr>
+                    <td colSpan="4" className="px-6 py-8 text-center text-sm text-slate-500">
+                      No users found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       ) : activeTab === 'activity' ? (
         <div className="card">
           <div className="px-6 py-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
@@ -482,6 +663,7 @@ const Dashboard = () => {
           <div className="lg:col-span-6">
             <TaskCreator 
               items={items} 
+              employees={users.filter(u => u.role === 'employee')}
               onTaskCreated={() => {
                 fetchTasks();
                 setEditingTask(null);
@@ -520,6 +702,12 @@ const Dashboard = () => {
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                           Created {new Date(task.createdAt).toLocaleString()}
                         </p>
+                        {task.assignedTo && (
+                          <p className="text-xs text-primary-600 mt-1 flex items-center gap-1 font-medium">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                            Assigned to: {task.assignedTo.username}
+                          </p>
+                        )}
                       </div>
                       
                       {/* Action Buttons */}

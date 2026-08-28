@@ -13,7 +13,10 @@ const Portal = () => {
   const [draftRemarks, setDraftRemarks] = useState({});
 
   const fetchItems = async () => {
-    try { const res = await api.get('/api/items'); setItems(res.data); }
+    try { 
+      const res = await api.get('/api/items'); 
+      setItems(res.data.sort((a, b) => a.name.localeCompare(b.name))); 
+    }
     catch (error) { console.error(error); }
   };
 

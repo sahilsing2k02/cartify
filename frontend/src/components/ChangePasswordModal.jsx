@@ -69,23 +69,22 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" onClick={onClose}>
       <div 
-        className="w-full max-w-md bg-white rounded-2xl shadow-premium border border-slate-100 overflow-hidden transform scale-100 transition-all"
+        className="w-full max-w-md bg-white rounded-lg shadow-lg border border-slate-200 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+        <div className="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
           <div>
-            <h3 className="text-base font-black text-slate-900 uppercase tracking-wider">Change Password</h3>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Secure your Cartify account</p>
+            <h3 className="text-base font-medium text-slate-900">Change Password</h3>
           </div>
           <button 
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-600 rounded-lg p-1 transition-colors"
+            className="text-slate-400 hover:text-slate-600 rounded p-1 transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"></path>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
         </div>
@@ -93,8 +92,8 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {error && (
-            <div className="bg-red-50 border border-red-100 text-red-700 px-4 py-3 rounded-xl text-xs font-semibold animate-fade-in flex items-center gap-2">
-              <svg className="w-4 h-4 shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded text-sm flex items-center gap-2">
+              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
               <span>{error}</span>
@@ -102,9 +101,9 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
           )}
 
           {success && (
-            <div className="bg-green-50 border border-green-100 text-green-700 px-4 py-3 rounded-xl text-xs font-semibold animate-fade-in flex items-center gap-2">
-              <svg className="w-4 h-4 shrink-0 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded text-sm flex items-center gap-2">
+              <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
               </svg>
               <span>{success}</span>
             </div>
@@ -112,7 +111,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Current Password</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Current Password</label>
               <input 
                 type="password"
                 required
@@ -125,7 +124,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">New Password</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">New Password</label>
               <input 
                 type="password"
                 required
@@ -138,7 +137,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">Confirm New Password</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Confirm New Password</label>
               <input 
                 type="password"
                 required
@@ -151,18 +150,18 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex justify-end gap-3 pt-2">
             <button 
               type="button" 
               onClick={onClose}
-              className="flex-1 btn btn-secondary py-3 text-xs uppercase tracking-widest font-bold"
+              className="btn btn-secondary px-4 py-2"
               disabled={loading}
             >
               Cancel
             </button>
             <button 
               type="submit"
-              className="flex-1 btn btn-primary py-3 text-xs uppercase tracking-widest font-bold shadow-lg"
+              className="btn btn-primary px-4 py-2"
               disabled={loading}
             >
               {loading ? 'Saving...' : 'Update Password'}

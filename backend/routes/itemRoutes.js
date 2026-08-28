@@ -148,6 +148,7 @@ router.post('/checkout', protect, async (req, res) => {
     for (const cartItem of items) {
       const dbItem = await Item.findById(cartItem._id);
       dbItem.stock -= cartItem.quantity;
+      dbItem.sold = (dbItem.sold || 0) + cartItem.quantity;
       if (dbItem.stock === 0) {
         dbItem.reportedOutOfStock = true;
       }

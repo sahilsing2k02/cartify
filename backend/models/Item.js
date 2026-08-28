@@ -14,8 +14,17 @@ const itemSchema = new mongoose.Schema(
     },
     stock: {
       type: Number,
+      required: true,
       default: 0,
       min: [0, 'Stock cannot be negative']
+    },
+    sold: {
+      type: Number,
+      default: 0
+    },
+    delivered: {
+      type: Number,
+      default: 0
     },
     reportedOutOfStock: {
       type: Boolean,

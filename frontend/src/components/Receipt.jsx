@@ -5,73 +5,72 @@ const Receipt = forwardRef(({ cartItems, subtotal, vat, total, recipient, orderI
   const receiptId = useMemo(() => orderId || Math.random().toString(36).substring(2, 9).toUpperCase(), [orderId]);
 
   return (
-    <div ref={ref} className="bg-white p-8 max-w-sm mx-auto font-mono text-slate-800 border shadow-sm print:shadow-none print:border-none">
+    <div ref={ref} className="bg-white p-6 max-w-sm mx-auto text-slate-800 border border-slate-200 shadow-sm print:shadow-none print:border-none">
       <div className="text-center mb-6">
-        <h1 className="text-2xl font-black tracking-tighter uppercase mb-1">Cartify</h1>
+        <h1 className="text-xl font-bold tracking-tight mb-1">Cartify</h1>
         {recipient && (
-          <p className="text-[10px] text-primary-600 font-black uppercase tracking-[0.2em] mb-2 border-y border-primary-100 py-1">
+          <p className="text-sm text-slate-600 mb-2 py-1">
             Customer: {recipient}
           </p>
         )}
-        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Premium Inventory & Sales</p>
+        <p className="text-xs text-slate-500">Premium Inventory & Sales</p>
         <div className="my-4 border-b border-dashed border-slate-300"></div>
       </div>
 
-      <div className="text-[10px] space-y-1 mb-6 uppercase font-bold text-slate-500">
+      <div className="text-sm space-y-1 mb-6 text-slate-600">
         <div className="flex justify-between">
           <span>Receipt ID:</span>
-          <span className="text-slate-900"># {receiptId}</span>
+          <span className="text-slate-900 font-medium">#{receiptId}</span>
         </div>
         <div className="flex justify-between">
           <span>Date:</span>
-          <span className="text-slate-900">{date}</span>
+          <span className="text-slate-900 font-medium">{date}</span>
         </div>
       </div>
 
       <div className="mb-6">
-        <table className="w-full text-xs">
+        <table className="w-full text-sm">
           <thead>
-            <tr className="border-b-2 border-slate-900 text-left">
-              <th className="py-2">Item</th>
-              <th className="py-2 text-center">Qty</th>
-              <th className="py-2 text-right">Price</th>
+            <tr className="border-b border-slate-300 text-left text-slate-600">
+              <th className="py-2 font-medium">Item</th>
+              <th className="py-2 text-center font-medium">Qty</th>
+              <th className="py-2 text-right font-medium">Price</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {cartItems.map((item) => (
               <tr key={item._id}>
-                <td className="py-3 font-bold uppercase tracking-tight">{item.name}</td>
-                <td className="py-3 text-center">{item.quantity}</td>
-                <td className="py-3 text-right">₹{(item.price * item.quantity).toFixed(2)}</td>
+                <td className="py-2.5 font-medium text-slate-900">{item.name}</td>
+                <td className="py-2.5 text-center text-slate-600">{item.quantity}</td>
+                <td className="py-2.5 text-right text-slate-900">₹{(item.price * item.quantity).toFixed(2)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <div className="border-t-2 border-slate-900 pt-4 space-y-2 text-sm font-bold">
-        <div className="flex justify-between">
+      <div className="border-t border-slate-300 pt-4 space-y-2 text-sm">
+        <div className="flex justify-between text-slate-600">
           <span>Subtotal</span>
-          <span>₹{subtotal.toFixed(2)}</span>
+          <span className="text-slate-900 font-medium">₹{subtotal.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between text-slate-600 font-medium">
+        <div className="flex justify-between text-slate-600">
           <span>VAT (18%)</span>
-          <span>₹{vat.toFixed(2)}</span>
+          <span className="text-slate-900 font-medium">₹{vat.toFixed(2)}</span>
         </div>
-        <div className="flex justify-between text-lg font-black border-t-2 border-slate-100 pt-2 mt-2">
+        <div className="flex justify-between text-base font-bold border-t border-slate-200 pt-3 mt-3">
           <span>Total</span>
-          <span className="text-primary-600">₹{total.toFixed(2)}</span>
+          <span className="text-slate-900">₹{total.toFixed(2)}</span>
         </div>
       </div>
 
-      <div className="mt-10 text-center">
-        <div className="barcode h-8 w-48 mx-auto bg-slate-100 mb-4 flex items-center justify-center text-[10px] text-slate-400 font-bold">
-          [ BARCODE: {receiptId} ]
+      <div className="mt-8 text-center">
+        <div className="barcode h-10 w-48 mx-auto bg-slate-100 mb-3 flex items-center justify-center text-xs text-slate-500 font-mono tracking-widest border border-slate-200 rounded">
+          {receiptId}
         </div>
-        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+        <p className="text-xs text-slate-500 mb-1">
           Thank you for shopping at Cartify
         </p>
-        <p className="text-[8px] text-slate-300 mt-2">Software by Antigravity v2.1</p>
       </div>
     </div>
   );

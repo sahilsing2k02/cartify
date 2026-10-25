@@ -1,4 +1,4 @@
-<img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/b8ea1efb-33b2-483f-9f45-76d53580b53f" /># 🛒 Cartify — Inventory & Logistics Management System
+🛒 Cartify — Inventory & Logistics Management System
 
 **🟢 Live Demo:** [https://cartify-tan.vercel.app](https://cartify-tan.vercel.app)
 *(Backend API powered by Render & MongoDB Atlas Cloud)*
